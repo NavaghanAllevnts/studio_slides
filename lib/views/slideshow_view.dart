@@ -16,8 +16,7 @@ class SlideshowView extends StatefulWidget {
   State<SlideshowView> createState() => _SlideshowViewState();
 }
 
-class _SlideshowViewState extends State<SlideshowView>
-    with SingleTickerProviderStateMixin {
+class _SlideshowViewState extends State<SlideshowView> with SingleTickerProviderStateMixin {
   final SlideService _slideService = SlideService();
   List<Slide> _slides = [];
   int _currentIndex = 0;
@@ -50,14 +49,9 @@ class _SlideshowViewState extends State<SlideshowView>
 
   /// Initialize fade animation controller
   void _initializeFadeAnimation() {
-    _fadeController = AnimationController(
-      duration: _transitionDuration,
-      vsync: this,
-    );
+    _fadeController = AnimationController(duration: _transitionDuration, vsync: this);
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
-    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut));
 
     // Start with the image visible
     _fadeController.value = 1.0;
@@ -106,9 +100,7 @@ class _SlideshowViewState extends State<SlideshowView>
           CachedNetworkImageProvider(imageUrl),
           context,
           onError: (exception, stackTrace) {
-            debugPrint(
-              'Error precaching image at index $nextIndex: $exception',
-            );
+            debugPrint('Error precaching image at index $nextIndex: $exception');
           },
         ).catchError((error) {
           debugPrint('Error precaching image at index $nextIndex: $error');
@@ -227,9 +219,7 @@ class _SlideshowViewState extends State<SlideshowView>
   /// Build the main body of the slideshow
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      );
+      return const Center(child: CircularProgressIndicator(color: Colors.white));
     }
 
     if (_slides.isEmpty) {
@@ -259,10 +249,7 @@ class _SlideshowViewState extends State<SlideshowView>
     // Safety check
     if (_slides.isEmpty || _currentIndex >= _slides.length) {
       return const Center(
-        child: Text(
-          'No slides available',
-          style: TextStyle(color: Colors.white, fontSize: 24),
-        ),
+        child: Text('No slides available', style: TextStyle(color: Colors.white, fontSize: 24)),
       );
     }
 
@@ -280,8 +267,7 @@ class _SlideshowViewState extends State<SlideshowView>
             width: double.infinity,
             height: double.infinity,
             placeholder: (context, url) => Container(color: Colors.black),
-            errorWidget: (context, url, error) =>
-                Container(color: Colors.black),
+            errorWidget: (context, url, error) => Container(color: Colors.black),
             memCacheWidth: 640,
             memCacheHeight: 360,
             imageBuilder: (context, imageProvider) => Container(
@@ -299,9 +285,7 @@ class _SlideshowViewState extends State<SlideshowView>
           Center(
             child: CachedNetworkImage(
               imageUrl: currentSlide.imageUrl,
-              fit: BoxFit.contain,
-              width: double.infinity,
-              height: double.infinity,
+              fit: BoxFit.cover,
               placeholder: (context, url) => _buildPlaceholder(url),
               errorWidget: (context, url, error) {
                 debugPrint('Error loading image ${currentSlide.name}: $error');
@@ -309,30 +293,19 @@ class _SlideshowViewState extends State<SlideshowView>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.broken_image,
-                        color: Colors.white54,
-                        size: 64,
-                      ),
+                      const Icon(Icons.broken_image, color: Colors.white54, size: 64),
                       const SizedBox(height: 16),
                       Text(
                         'Error loading image:\n${currentSlide.name}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 18,
-                        ),
+                        style: const TextStyle(color: Colors.white54, fontSize: 18),
                       ),
                     ],
                   ),
                 );
               },
-              // Cache configuration optimized for TV (lower resolution to avoid memory issues)
-              memCacheWidth: 1280,
-              memCacheHeight: 720,
               maxWidthDiskCache: 1920,
               maxHeightDiskCache: 1080,
-              // Add timeout for better error handling
               fadeInDuration: const Duration(milliseconds: 300),
               fadeOutDuration: const Duration(milliseconds: 300),
             ),
@@ -346,9 +319,7 @@ class _SlideshowViewState extends State<SlideshowView>
   Widget _buildPlaceholder(String url) {
     return Container(
       color: Colors.black,
-      child: const Center(
-        child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 3),
-      ),
+      child: const Center(child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 3)),
     );
   }
 
@@ -362,10 +333,7 @@ class _SlideshowViewState extends State<SlideshowView>
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3),
-            width: 1,
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -374,12 +342,7 @@ class _SlideshowViewState extends State<SlideshowView>
             SizedBox(width: 12),
             Text(
               'Paused',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.5,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w500, letterSpacing: 0.5),
             ),
           ],
         ),
