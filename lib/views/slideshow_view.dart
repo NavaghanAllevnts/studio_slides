@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ui' as ui;
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -100,12 +100,22 @@ class _SlideshowViewState extends State<SlideshowView>
       final nextIndex = (_currentIndex + i) % _slides.length;
       final imageUrl = _slides[nextIndex].imageUrl;
 
-      // Precache the image
-      precacheImage(CachedNetworkImageProvider(imageUrl), context).catchError((
-        error,
-      ) {
-        debugPrint('Error precaching image at index $nextIndex: $error');
-      });
+      // Precache the image with better error handling
+      try {
+        precacheImage(
+          CachedNetworkImageProvider(imageUrl),
+          context,
+          onError: (exception, stackTrace) {
+            debugPrint(
+              'Error precaching image at index $nextIndex: $exception',
+            );
+          },
+        ).catchError((error) {
+          debugPrint('Error precaching image at index $nextIndex: $error');
+        });
+      } catch (e) {
+        debugPrint('Exception while precaching image at index $nextIndex: $e');
+      }
     }
   }
 
@@ -260,75 +270,85 @@ class _SlideshowViewState extends State<SlideshowView>
 
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: Center(
-        child: CachedNetworkImage(
-          imageUrl: currentSlide.imageUrl,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: double.infinity,
-          placeholder: (context, url) => _buildBlurredPlaceholder(url),
-          errorWidget: (context, url, error) {
-            debugPrint('Error loading image ${currentSlide.name}: $error');
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.broken_image,
-                    color: Colors.white54,
-                    size: 64,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error loading image:\n${currentSlide.name}',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white54, fontSize: 18),
-                  ),
-                ],
-              ),
-            );
-          },
-          // Cache configuration for optimal performance
-          memCacheWidth: 1920,
-          memCacheHeight: 1080,
-          maxWidthDiskCache: 1920,
-          maxHeightDiskCache: 1080,
-        ),
-      ),
-    );
-  }
-
-  /// Build a blurred placeholder while the image is loading
-  Widget _buildBlurredPlaceholder(String url) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Low-quality blurred version of the image
-        CachedNetworkImage(
-          imageUrl: url,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-          // Use very low resolution for quick loading
-          memCacheWidth: 100,
-          memCacheHeight: 100,
-          maxWidthDiskCache: 100,
-          maxHeightDiskCache: 100,
-          imageBuilder: (context, imageProvider) {
-            return Container(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Blurred background image
+          CachedNetworkImage(
+            imageUrl: currentSlide.imageUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            placeholder: (context, url) => Container(color: Colors.black),
+            errorWidget: (context, url, error) =>
+                Container(color: Colors.black),
+            memCacheWidth: 640,
+            memCacheHeight: 360,
+            imageBuilder: (context, imageProvider) => Container(
               decoration: BoxDecoration(
                 image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
               ),
               child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
+                filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
                 child: Container(color: Colors.black.withValues(alpha: 0.3)),
               ),
-            );
-          },
-          // If even the low-res version fails, show a dark background
-          errorWidget: (context, url, error) => Container(color: Colors.black),
-        ),
-      ],
+            ),
+          ),
+
+          // Main centered image
+          Center(
+            child: CachedNetworkImage(
+              imageUrl: currentSlide.imageUrl,
+              fit: BoxFit.contain,
+              width: double.infinity,
+              height: double.infinity,
+              placeholder: (context, url) => _buildPlaceholder(url),
+              errorWidget: (context, url, error) {
+                debugPrint('Error loading image ${currentSlide.name}: $error');
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.broken_image,
+                        color: Colors.white54,
+                        size: 64,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error loading image:\n${currentSlide.name}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              // Cache configuration optimized for TV (lower resolution to avoid memory issues)
+              memCacheWidth: 1280,
+              memCacheHeight: 720,
+              maxWidthDiskCache: 1920,
+              maxHeightDiskCache: 1080,
+              // Add timeout for better error handling
+              fadeInDuration: const Duration(milliseconds: 300),
+              fadeOutDuration: const Duration(milliseconds: 300),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build a simple placeholder while the image is loading
+  Widget _buildPlaceholder(String url) {
+    return Container(
+      color: Colors.black,
+      child: const Center(
+        child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 3),
+      ),
     );
   }
 
